@@ -1,0 +1,82 @@
+﻿@page "/"
+
+<PageTitle>Index</PageTitle>
+
+@using BlazorPhotoLibrary.Services
+@using BlazorPhotoLibrary.Models
+@inject IPhotoService PhotoService
+@inject ILogger<Index> Logger
+
+<h1 class="visually-hidden">Photo Library</h1>
+
+<div class="row row-cols-lg-auto g-3 align-items-center">
+    <div class="col-12">
+        <label for="albumId" class="visually-hidden">Album ID</label>
+        <select id="albumId" class="form-select" @bind="_albumId" @bind:after="SelectAlbumAsync">
+            <option value="" disabled selected>Select an Album...</option>
+            @foreach (int _id in this._albumIds)
+            {
+                <option value="@_id">@_id</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="row">
+    @foreach (Photo _photo in this._photos)
+    {
+        <div class="col-lg-3 col-md-4 col-sm-6 col py-2">
+            <div class="card">
+                <img src="@_photo.ThumbnailUrl" class="card-img-top" alt="@_photo.Title">
+                <div class="card-body">
+                    <p class="h5 card-title">@_photo.Title</p>
+                    <p class="h6 card-subtitle mb-2 text-muted">ID: @_photo.PhotoId</p>
+                    <a href="@_photo.Url" target="_blank" class="card-link">Url</a>
+                    <a href="@_photo.ThumbnailUrl" target="_blank" class="card-link">Thumbnail Url</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+
+    private int? _albumId;
+
+    /// <summary>
+    /// The album IDs for the dropdown.
+    /// </summary>
+    private HashSet<int> _albumIds = new();
+
+    /// <summary>
+    /// The photos associated with the selected album.
+    /// </summary>
+    private List<Photo> _photos = new();
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        this.Logger.LogDebug("Index: Initializing page.");
+
+        this._albumIds = await this.PhotoService.GetAlbumIdsAsync();
+
+        await base.OnInitializedAsync();
+
+        this.Logger.LogDebug("Index: Page initialized.");
+    }
+
+    /// <summary>
+    /// Upon selecting an album ID from the dropdown, retrieves the photos from the repository.
+    /// </summary>
+    /// <returns>A completed task.</returns>
+    private async Task SelectAlbumAsync()
+    {
+        this.Logger.LogDebug($"Index: Album {this._albumId} selected. Retrieving photos.");
+
+        if (this._albumId is null) { return; }
+
+        this._photos = await this.PhotoService.GetPhotosByAlbumIdAsync(this._albumId.Value);
+
+        this.Logger.LogDebug($"Index: Photos for album {this._albumId} retrieved.");
+    }
+}

@@ -21,7 +21,7 @@ public class PhotoService : IPhotoService
     private const string _photosUrl = "photos";
 
     /// <summary>
-    /// The <see cref="IHttpClientFactory"/>.
+    /// The <see cref="HttpClient"/>.
     /// </summary>
     private readonly HttpClient _httpClient;
 
@@ -46,7 +46,7 @@ public class PhotoService : IPhotoService
     /// <inheritdoc />
     public async Task<HashSet<int>> GetAlbumIdsAsync()
     {
-        this._logger.LogDebug("Retrieving the album IDs.");
+        this._logger.LogDebug("Photo Service: Retrieving the album IDs.");
 
         try
         {
@@ -59,26 +59,26 @@ public class PhotoService : IPhotoService
                 List<Photo> _photos = await JsonSerializer.DeserializeAsync<List<Photo>>(_contentStream) ?? new();
                 HashSet<int> _albumIds = _photos.Select(p => p.AlbumId).ToHashSet();
 
-                this._logger.LogDebug($"Successfully retrieved {_albumIds.Count} album IDs.");
+                this._logger.LogDebug($"Photo Service: Successfully retrieved {_albumIds.Count} album IDs.");
 
                 return _albumIds;
             }
+
+            throw new BadHttpRequestException($"Photo Service: Response code {_response.StatusCode} received from PhotosClient.");
         }
         catch (Exception _ex)
         {
             // TODO: properly handle exception.
-            this._logger.LogError(_ex, "Failed to retrieve the album IDs.");
+            this._logger.LogError(_ex, "Photo Service: Failed to retrieve the album IDs.");
 
             throw;
         }
-
-        return new(0);
     }
 
     /// <inheritdoc />
     public async Task<List<Photo>> GetPhotosByAlbumIdAsync(int albumId)
     {
-        this._logger.LogDebug($"Retrieving photos for album {albumId}.");
+        this._logger.LogDebug($"Photo Service: Retrieving photos for album {albumId}.");
 
         HttpRequestMessage _request = new(HttpMethod.Get, string.Format(_albumUrl, albumId));
         HttpResponseMessage _response = await this._httpClient.SendAsync(_request);
@@ -89,18 +89,18 @@ public class PhotoService : IPhotoService
                 await using Stream _contentStream = await _response.Content.ReadAsStreamAsync();
                 List<Photo> _photos = await JsonSerializer.DeserializeAsync<List<Photo>>(_contentStream) ?? new();
 
-                this._logger.LogDebug($"Successfully retrieved {_photos.Count} photos for album {albumId}.");
+                this._logger.LogDebug($"Photo Service: Successfully retrieved {_photos.Count} photos for album {albumId}.");
 
                 return _photos;
             }
+
+            throw new BadHttpRequestException($"Photo Service: Response code {_response.StatusCode} received from PhotosClient.");
         }
         catch (Exception _ex)
         {
             // TODO: properly handle exception.
-            this._logger.LogError(_ex, $"Failed to retrieve photos for the album {albumId}.");
+            this._logger.LogError(_ex, $"Photo Service: Failed to retrieve photos for the album {albumId}.");
             throw;
         }
-
-        return new(0);
     }
 }

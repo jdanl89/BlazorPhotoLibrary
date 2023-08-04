@@ -5,6 +5,7 @@
 @using BlazorPhotoLibrary.Services
 @using BlazorPhotoLibrary.Models
 @inject IPhotoService PhotoService
+@inject ILogger<Index> Logger
 
 <h1 class="visually-hidden">Photo Library</h1>
 
@@ -39,6 +40,7 @@
 </div>
 
 @code {
+
     private int? _albumId;
 
     /// <summary>
@@ -54,9 +56,13 @@
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()
     {
+        this.Logger.LogDebug("Index: Initializing page.");
+
         this._albumIds = await this.PhotoService.GetAlbumIdsAsync();
 
         await base.OnInitializedAsync();
+
+        this.Logger.LogDebug("Index: Page initialized.");
     }
 
     /// <summary>
@@ -65,8 +71,12 @@
     /// <returns>A completed task.</returns>
     private async Task SelectAlbumAsync()
     {
+        this.Logger.LogDebug($"Index: Album {this._albumId} selected. Retrieving photos.");
+
         if (this._albumId is null) { return; }
 
         this._photos = await this.PhotoService.GetPhotosByAlbumIdAsync(this._albumId.Value);
+
+        this.Logger.LogDebug($"Index: Photos for album {this._albumId} retrieved.");
     }
 }
